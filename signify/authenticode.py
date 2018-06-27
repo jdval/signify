@@ -27,7 +27,11 @@
 
 import hashlib
 import logging
-import pathlib
+import sys
+if sys.version_info.major ==2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
 
 from pyasn1.codec.ber import decoder as ber_decoder
 
@@ -60,7 +64,7 @@ class AuthenticodeSignerInfo(SignerInfo):
     _required_authenticated_attributes = (asn1.pkcs7.ContentType, asn1.pkcs7.Digest, asn1.spc.SpcSpOpusInfo)
 
     def _parse(self):
-        super()._parse()
+        super(AuthenticodeSignerInfo, self)._parse()
 
         # - Retrieve object from SpcSpOpusInfo from the authenticated attributes (for normal signer)
         self.program_name = self.more_info = None

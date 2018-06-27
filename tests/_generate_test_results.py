@@ -21,26 +21,29 @@
 
 import hashlib
 import json
-import pathlib
+import sys
+import binascii
+if sys.version_info.major ==2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
 
 from signify.fingerprinter import AuthenticodeFingerprinter
 
 
 def main():
-    for filename in pathlib.Path("tests/test_data").iterdir():
+    for filename in pathlib.Path("test_data").iterdir():
         if str(filename).endswith(".res"):
             continue
         print("Updating {}...".format(filename))
         with open(str(filename), "rb") as file_obj:
             fingerprinter = AuthenticodeFingerprinter(file_obj)
-            fingerprinter.add_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512)
+            fingerprinter.add_hashers(hashers = [hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512])
             fingerprinter.add_authenticode_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256)
             results = fingerprinter.hashes()
-
-        # convert to hex
         for v in results.values():
             for k, b in v.items():
-                v[k] = b.hex()
+                v[k] = binascii.hexlify(b)
         with open(str(filename) + ".res", "w") as res_obj:
             json.dump(results, res_obj)
 

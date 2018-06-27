@@ -23,7 +23,12 @@ import hashlib
 import io
 import json
 import unittest
-import pathlib
+import sys
+if sys.version_info.major ==2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
+import binascii
 
 from signify.fingerprinter import AuthenticodeFingerprinter, Fingerprinter, Finger, Range
 
@@ -37,26 +42,28 @@ class FingerPrinterTestCase(unittest.TestCase):
         for filename in (root_dir / "test_data").iterdir():
             if str(filename).endswith(".res") or str(filename).endswith("README.rst"):
                 continue
-            with self.subTest(filename):
-                with open(str(filename), "rb") as file_obj:
-                    fingerprinter = AuthenticodeFingerprinter(file_obj)
-                    fingerprinter.add_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512)
-                    fingerprinter.add_authenticode_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256)
-                    results = fingerprinter.hashes()
+            # with self.subTest(filename):
 
-                # convert to hex
-                for v in results.values():
-                    for k, b in v.items():
-                        v[k] = b.hex()
+            with open(str(filename), "rb") as file_obj:
+                fingerprinter = AuthenticodeFingerprinter(file_obj)
+                fingerprinter.add_hashers(hashers=[hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512])
+                fingerprinter.add_authenticode_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256)
+                results = fingerprinter.hashes()
 
-                with open(str(filename) + ".res", "r") as res_obj:
-                    expected_results = json.load(res_obj)
+            # convert to hex
+            for v in results.values():
+                for k, b in v.items():
+                    # v[k] = b.hex()
+                    v[k] = binascii.hexlify(b)
 
-                self.assertDictEqual(expected_results, results)
+            with open(str(filename) + ".res", "r") as res_obj:
+                expected_results = json.load(res_obj)
+
+            self.assertDictEqual(expected_results, results)
 
     def test_reasonable_interval(self):
         # Check if the limit on maximum blocksize for processing still holds.
-        dummy = io.StringIO("")
+        dummy = io.StringIO(u"")
         fp = Fingerprinter(dummy)
         fp._fingers.append(Finger(None, [Range(0, 1000001)],  None))
 
@@ -65,7 +72,8 @@ class FingerPrinterTestCase(unittest.TestCase):
         self.assertEqual(1000000, stop)
 
     def test_adjustments(self):
-        fp = Fingerprinter(io.StringIO(""))
+        # fp = Fingerprinter(io.StringIO(""))
+        fp = Fingerprinter(io.StringIO())
         fp._fingers.append(Finger(None, [Range(10, 20)], None))
 
         # The remaining range should not yet be touched...
@@ -86,7 +94,7 @@ class FingerPrinterTestCase(unittest.TestCase):
 
     def test_hash_block(self):
         # Does it invoke a hash function?
-        dummy = "12345"
+        dummy = u"12345"
         fp = Fingerprinter(io.StringIO(dummy))
         big_finger = Finger(None, [Range(0, len(dummy))], None)
 

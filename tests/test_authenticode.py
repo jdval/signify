@@ -22,7 +22,12 @@
 import hashlib
 import io
 import unittest
-import pathlib
+import sys
+if sys.version_info.major ==2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
+import pytz
 
 import binascii
 
@@ -111,7 +116,7 @@ class AuthenticodeParserTestCase(unittest.TestCase):
         with open(str(root_dir / "test_data" / "19e818d0da361c4feedd456fca63d68d4b024fbbd3d9265f606076c7ee72e8f8.ViR"), "rb") as f:
             pefile = SignedPEFile(f)
             pefile.verify(verification_context_kwargs=
-                          {'timestamp': datetime.datetime(2013, 1, 1, tzinfo=datetime.timezone.utc)})
+                          {'timestamp': datetime.datetime(2013, 1, 1, tzinfo=pytz.timezone("UTC"))})
 
 
 class CertificateTestCase(unittest.TestCase):

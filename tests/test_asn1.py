@@ -26,6 +26,7 @@ from pyasn1.type import useful
 from signify.asn1.x509_time import Time
 from signify.authenticode import CERTIFICATE_LOCATION
 from signify.certificates import Certificate
+import pytz
 
 
 class TimeTest(unittest.TestCase):
@@ -33,13 +34,15 @@ class TimeTest(unittest.TestCase):
         utctime = useful.UTCTime('120614235959Z')
         t = Time()
         t['utcTime'] = utctime
-        self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=datetime.timezone.utc))
+        # self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=datetime.timezone.utc))
+        self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=pytz.timezone("UTC")))
 
     def test_conversion_gen(self):
         gen_time = useful.GeneralizedTime('20120614235959Z')
         t = Time()
         t['generalTime'] = gen_time
-        self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=datetime.timezone.utc))
+        # self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=datetime.timezone.utc))
+        self.assertEqual(t.to_python_time(), datetime.datetime(2012, 6, 14, 23, 59, 59, tzinfo=pytz.timezone("UTC")))
 
 
 class RDNSequenceTest(unittest.TestCase):

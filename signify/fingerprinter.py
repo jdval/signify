@@ -120,7 +120,7 @@ class Fingerprinter(object):
 
         self._fingers = []
 
-    def add_hashers(self, *hashers, ranges=None, description="generic"):
+    def add_hashers(self, hashers=None, ranges=None, description="generic"):
         """Add hash methods to the fingerprinter.
 
         :param hashers: A list of hashers to add to the Fingerprinter. This generally will be hashlib functions.
@@ -266,7 +266,7 @@ class AuthenticodeFingerprinter(Fingerprinter):
             start = sum(start_length)
         ranges.append(Range(start, self._filelength))
 
-        self.add_hashers(*hashers, ranges=ranges, description='authentihash')
+        self.add_hashers(hashers=hashers, ranges=ranges, description='authentihash')
         return True
 
 
@@ -275,7 +275,7 @@ def main(*filenames):
         print("{}:".format(filename))
         with open(filename, "rb") as file_obj:
             fingerprinter = AuthenticodeFingerprinter(file_obj)
-            fingerprinter.add_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512)
+            fingerprinter.add_hashers(hashers = [hashlib.md5, hashlib.sha1, hashlib.sha256, hashlib.sha512])
             fingerprinter.add_authenticode_hashers(hashlib.md5, hashlib.sha1, hashlib.sha256)
             results = fingerprinter.hashes()
 

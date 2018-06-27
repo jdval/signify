@@ -2,3 +2,5 @@ pyasn1
 certvalidator
 asn1crypto
 oscrypto
+pytz
+pathlib2

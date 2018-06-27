@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pytz
 
 from certvalidator import ValidationContext, CertificateValidator
 
@@ -12,15 +13,21 @@ logger = logging.getLogger(__name__)
 class CertificateStore(list):
     """A list of :class:`Certificate` objects."""
 
-    def __init__(self, *args, trusted=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         :param bool trusted: If true, all certificates that are appended to this structure are set to trusted.
         """
-        super().__init__(*args, **kwargs)
-        self.trusted = trusted
+        if "trusted" in kwargs:
+            self.trusted = kwargs["trusted"]
+            del(kwargs["trusted"])
+        else:
+            self.trusted = False
+
+        super(CertificateStore, self).__init__(*args, **kwargs)
+
 
     def append(self, elem):
-        return super().append(elem)
+        return super(CertificateStore, self).append(elem)
 
 
 class FileSystemCertificateStore(CertificateStore):
@@ -34,16 +41,16 @@ class FileSystemCertificateStore(CertificateStore):
         :param bool trusted: If true, all certificates that are appended to this structure are set to trusted.
         """
 
-        super().__init__(*args, **kwargs)
+        super(FileSystemCertificateStore, self).__init__(*args, **kwargs)
         self.location = location
 
     def __iter__(self):
         self._load()  # TODO: load whenever needed.
-        return super().__iter__()
+        return super(FileSystemCertificateStore, self).__iter__()
 
     def __len__(self):
         self._load()
-        return super().__len__()
+        return super(FileSystemCertificateStore, self).__len__()
 
     def _load(self):
         if self._loaded:
@@ -56,8 +63,7 @@ class FileSystemCertificateStore(CertificateStore):
 
 
 class VerificationContext(object):
-    def __init__(self, *stores, timestamp=None, key_usages=None, extended_key_usages=None, optional_eku=True,
-                 allow_legacy=True):
+    def __init__(self, *stores, **kwargs):
         """A context holding properties about the verification of a signature or certificate.
 
         :param Iterable[CertificateStore] stores: A list of CertificateStore objects that contain certificates
@@ -73,11 +79,17 @@ class VerificationContext(object):
             to contain an encrypted hash instead of an encrypted DigestInfo ASN.1 structure. Both are found in the wild,
             but setting to True does reduce the reliability of the verification.
         """
+        # hacky backwards compatibility for py2
+        timestamp = kwargs.get("timestamp")
+        key_usages = kwargs.get("key_usages")
+        extended_key_usages = kwargs.get("extended_key_usages")
+        optional_eku = kwargs.get("optional_eku", True)
+        allow_legacy = kwargs.get("allow_legacy", True)
 
         self.stores = list(stores)
 
         if timestamp is None:
-            timestamp = datetime.datetime.now(datetime.timezone.utc)
+            timestamp = datetime.datetime.now(pytz.timezone("UTC"))
         self.timestamp = timestamp
         self.key_usages = key_usages
         self.extended_key_usages = extended_key_usages
@@ -91,9 +103,12 @@ class VerificationContext(object):
         :rtype: Iterable[Certificate]
         """
         for store in self.stores:
-            yield from store
+            # yield from store
+            # backwards compat py2 hack. no idea if this will break stuff or not...
+            for s in store:
+                yield s
 
-    def find_certificates(self, *, subject=None, serial_number=None, issuer=None):
+    def find_certificates(self, subject=None, serial_number=None, issuer=None):
         """Finds all certificates given by the specified properties. A property can be omitted by specifying
         :const:`None`. Calling this function without arguments is the same as using :meth:`certificates`
 

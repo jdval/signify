@@ -235,8 +235,10 @@ class SignerInfo(object):
         """
 
         for certificate in context.find_certificates(issuer=self.issuer, serial_number=self.serial_number):
-            yield from context.potential_chains(certificate)
-
+            # yield from context.potential_chains(certificate)
+            # py2 hack?
+            for c in context.potential_chains(certificate):
+                yield c
 
 class CounterSignerInfo(SignerInfo):
     _required_authenticated_attributes = (asn1.pkcs7.ContentType, asn1.pkcs7.SigningTime, asn1.pkcs7.Digest)

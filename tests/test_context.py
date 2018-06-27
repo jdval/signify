@@ -1,4 +1,8 @@
-import pathlib
+import sys
+if sys.version_info.major ==2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
 import unittest
 
 from signify.authenticode import TRUSTED_CERTIFICATE_STORE
